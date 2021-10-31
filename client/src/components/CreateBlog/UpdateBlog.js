@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useParams, useEffect } from "react";
 import { Button } from "react-bootstrap";
 import { Redirect } from "react-router";
 import AuthContext from "../../store/Auth-context";
@@ -8,18 +8,29 @@ export default function CreateBlog() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [blog, setBlog] = useState("");
-
   const [uploaded, setUploaded] = useState(false);
-  const [id, setId] = useState("");
 
-  const submitHandler = (event) => {
-    event.preventDefault();
+  const { uId } = useParams();
 
-    // const imgData = new FormData();
-    // imgData.append("cover", event.target[1].files[0]);
+  useEffect(() => {
+    const url = "http://127.0.0.1:5000/blog?id=" + uId;
+    fetch(url)
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        }
+      })
+      .then((data) => {
+        setTitle(data.title);
+        setDescription(data.description);
+        setBlog(data.blog);
+      });
+  }, [uId]);
 
-    fetch("http://127.0.0.1:5000/blog", {
-      method: "POST",
+  const updateBlog = () => {
+    const uurl = "http://127.0.0.1:5000/blog/" + uId;
+    fetch(uurl, {
+      method: "PATCH",
       body: JSON.stringify({
         title: title,
         description: description,
@@ -29,17 +40,11 @@ export default function CreateBlog() {
         Authorization: "Bearer " + ctx.token,
         "Content-Type": "application/json",
       },
-    })
-      .then((res) => {
-        if (res.ok) {
-          return res.json();
-        }
-      })
-      .then((data) => {
-        // imgData.append("id", data._id);
-        setId(data._id);
+    }).then((res) => {
+      if (res.ok) {
         setUploaded(true);
-      });
+      }
+    });
   };
 
   if (!ctx.isLoggedIn) {
@@ -47,12 +52,12 @@ export default function CreateBlog() {
   }
 
   if (uploaded) {
-    const url = "/blog/" + id;
+    const url = "/blog/" + uId;
     return <Redirect to={url} />;
   }
 
   return (
-    <form className='container mt-3' onSubmit={submitHandler}>
+    <form className='container mt-3' onSubmit={updateBlog}>
       <div className='mb-3'>
         <label htmlFor='discription' className='form-label'>
           Blog title
@@ -91,7 +96,7 @@ export default function CreateBlog() {
           required></textarea>
       </div>
 
-      <Button type='submit' className='btn btn-primary'>
+      <Button type='submit' className='btn btn-secondary'>
         Submit
       </Button>
     </form>

@@ -27,7 +27,6 @@ export default function Login() {
         }
       })
       .then((data) => {
-        console.log(data);
         ctx.onLogin(data.token, data.user);
       });
   };
